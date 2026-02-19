@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Souls - Incremental Boss Battle</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Idle Screen -->
+        <div id="idle-screen">
+            <header class="game-header">
+                <h1 class="game-title">⚔️ SOULS ⚔️</h1>
+                <p class="game-subtitle">Gather souls, defeat bosses, become legend</p>
+            </header>
+            
+            <div class="main-stats">
+                <div class="stat-box souls-display">
+                    <div class="stat-label">Souls</div>
+                    <div class="stat-value" id="souls-count">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Souls/Second</div>
+                    <div class="stat-value" id="souls-per-second">1.0</div>
+                </div>
+            </div>
+            
+            <div class="content-grid">
+                <!-- Upgrades Section -->
+                <section class="upgrades-section">
+                    <h2 class="section-title">🔥 Upgrades</h2>
+                    <div class="upgrades-container">
+                        <button class="upgrade-btn" data-upgrade="damage">
+                            <div class="upgrade-header">
+                                <span class="upgrade-name">⚔️ Damage</span>
+                                <span class="upgrade-level">Lv. <span class="upgrade-level">0</span></span>
+                            </div>
+                            <div class="upgrade-description">Exponentially increases souls per second</div>
+                            <div class="upgrade-cost-display">
+                                Cost: <span class="upgrade-cost">10</span> souls
+                            </div>
+                        </button>
+                    </div>
+                </section>
+                
+                <!-- Statistics Section -->
+                <section class="stats-section">
+                    <h2 class="section-title">📊 Statistics</h2>
+                    <div id="stats" class="stats-container">
+                        <div class="stat-item">Bosses Defeated: 0</div>
+                        <div class="stat-item">Deaths: 0</div>
+                        <div class="stat-item">Total Souls: 0</div>
+                    </div>
+                    
+                    <div class="controls">
+                        <button id="fight-boss-btn" class="control-btn fight-boss" disabled>⚔️ Fight Boss (100 souls needed)</button>
+                        <button id="test-boss-btn" class="control-btn">🐛 Test Boss (Debug)</button>
+                        <button id="gain-souls-btn" class="control-btn">💰 +100 Souls (Debug)</button>
+                        <button id="save-btn" class="control-btn">Save Game</button>
+                        <button id="reset-btn" class="control-btn danger">Reset Progress</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+        
+        <!-- Boss Fight Screen -->
+        <div id="boss-screen" class="hidden">
+            <div class="boss-info">
+                <div class="boss-header">
+                    <h2 id="boss-name" class="boss-name">Boss Name</h2>
+                    <p id="boss-description" class="boss-description">Boss description</p>
+                </div>
+                <div class="boss-health-container">
+                    <div class="boss-health-bar">
+                        <div id="boss-health-bar" class="boss-health-fill"></div>
+                        <div id="boss-health-text" class="boss-health-text">100%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="arena-container">
+                <canvas id="boss-canvas"></canvas>
+            </div>
+            
+            <div class="player-info">
+                <div class="player-stat">
+                    <span class="player-label">Health:</span>
+                    <div id="player-health" class="hearts-container">
+                        <div class="heart filled"></div>
+                        <div class="heart filled"></div>
+                        <div class="heart filled"></div>
+                    </div>
+                </div>
+                <div class="player-stat">
+                    <span class="player-label">DPS:</span>
+                    <span id="player-dps" class="player-value">1.0 DPS</span>
+                </div>
+                <div class="controls-hint">
+                    Use WASD or Arrow Keys to move
+                </div>
+            </div>
+            
+            <!-- Boss Result Overlay -->
+            <div id="boss-result" class="boss-result hidden">
+                <h2 id="result-text" class="result-text">VICTORY</h2>
+                <p id="result-message" class="result-message">You defeated the boss!</p>
+                <button id="continue-btn" class="continue-btn">Continue</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="state.js"></script>
+    <script src="combat/bullets.js"></script>
+    <script src="combat/patterns.js"></script>
+    <script src="combat/player.js"></script>
+    <script src="idleSystem.js"></script>
+    <script src="bossSystem.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
