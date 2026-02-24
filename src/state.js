@@ -32,9 +32,9 @@ function formatNumber(num) {
 // Game State Management
 const GameState = {
     // Currency and progression
-    souls: 0,
+    souls: 1,
     totalSouls: 0,
-    soulsPerSecond: 1,
+    soulsPerSecond: 0,
     
     // Boss progression
     currentBossIndex: 0,
@@ -43,33 +43,27 @@ const GameState = {
     
     // Upgrades
     upgrades: {
-        damage: {
+        playerLevel: {
+            level: 0,
+            description: "Increases SPS. Cost ×10 per level. Unlocks stats."
+        },
+        str: {
             level: 0,
             baseCost: 10,
             costMultiplier: 1.5,
-            effect: 1, // Multiplier for souls per second
-            description: "Increases souls per second"
+            description: "Exponentially increases base SPS"
         },
-        speed: {
+        dex: {
             level: 0,
-            baseCost: 15,
-            costMultiplier: 1.6,
-            effect: 0, // Bonus speed
-            description: "Move faster in boss fights"
+            baseCost: 100,
+            costMultiplier: 1.8,
+            description: "Multiplies total SPS (1 + DEX) ×"
         },
-        health: {
+        int: {
             level: 0,
-            baseCost: 20,
-            costMultiplier: 1.7,
-            effect: 3, // Max health
-            description: "Increases max health"
-        },
-        critChance: {
-            level: 0,
-            baseCost: 50,
-            costMultiplier: 2.0,
-            effect: 0, // Crit chance %
-            description: "Chance to double souls gained"
+            baseCost: 500,
+            costMultiplier: 2.2,
+            description: "Arcane Synergy — amplifies STR and DEX"
         }
     },
     
@@ -89,19 +83,42 @@ const GameState = {
     // Calculate current upgrade cost
     getUpgradeCost(upgradeType) {
         const upgrade = this.upgrades[upgradeType];
+        if (upgradeType === 'playerLevel') {
+            // Cost: 1, 10, 100, 1000, ... (×10 per level)
+            return Math.floor(Math.pow(10, upgrade.level));
+        }
         return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.level));
     },
-    
-    // Calculate souls per second
-    calculateSoulsPerSecond() {
-        // Exponential growth: each damage level multiplies by 1.5x
-        // Formula: base * (1.5 ^ damageLevel) * (1 + bosses * 0.1)
-        let base = 1;
-        base *= Math.pow(1.5, this.upgrades.damage.level);
-        base *= (1 + this.stats.bossesDefeated * 0.1);
-        return Math.floor(base * 10) / 10;
+
+    // Check if an upgrade is unlocked based on player level
+    isUpgradeUnlocked(upgradeType) {
+        const pl = this.upgrades.playerLevel.level;
+        if (upgradeType === 'str') return pl >= 3;
+        if (upgradeType === 'dex') return pl >= 5;
+        if (upgradeType === 'int') return pl >= 10;
+        return true; // playerLevel always unlocked
     },
-    
+
+    // Calculate souls per second
+    // Formula: (playerLevel + 1.5^STR) × (1 + DEX) × (1 + INT × 0.5) × bossBonus
+    calculateSoulsPerSecond() {
+        const pl  = this.upgrades.playerLevel.level;
+        const str = this.upgrades.str.level;
+        const dex = this.upgrades.dex.level;
+        const int = this.upgrades.int.level;
+
+        const playerLvlSPS = pl;                              // flat SPS per player level
+        const strSPS       = str > 0 ? Math.pow(1.5, str) : 0; // exponential, only if purchased
+        const baseSPS      = playerLvlSPS + strSPS;
+
+        const dexMulti  = 1 + dex;          // linear DEX multiplier
+        const intMulti  = 1 + int * 0.5;   // Arcane Synergy
+        const bossBonus = 1 + this.stats.bossesDefeated * 0.1;
+
+        const total = baseSPS * dexMulti * intMulti * bossBonus;
+        return Math.max(0, Math.floor(total * 10) / 10);
+    },
+
     // Update souls per second
     updateSoulsPerSecond() {
         this.soulsPerSecond = this.calculateSoulsPerSecond();
@@ -124,6 +141,7 @@ const GameState = {
     
     // Purchase upgrade
     purchaseUpgrade(upgradeType) {
+        if (!this.isUpgradeUnlocked(upgradeType)) return false;
         const cost = this.getUpgradeCost(upgradeType);
         if (this.souls >= cost) {
             this.souls -= cost;
@@ -212,10 +230,12 @@ const GameState = {
                 
                 this.souls = data.souls || 0;
                 this.totalSouls = data.totalSouls || 0;
-                this.soulsPerSecond = data.soulsPerSecond || 1;
                 this.currentBossIndex = data.currentBossIndex || 0;
                 this.soulsNeededForBoss = data.soulsNeededForBoss || 100;
-                this.upgrades = data.upgrades || this.upgrades;
+                // Only restore upgrades if they use the new format (has playerLevel key)
+                if (data.upgrades && 'playerLevel' in data.upgrades) {
+                    this.upgrades = data.upgrades;
+                }
                 this.stats = data.stats || this.stats;
                 this.updateSoulsPerSecond();
                 this.maxPlayerHealth = this.getMaxHealth();

@@ -14,8 +14,6 @@ const IdleSystem = {
     },
     
     update() {
-        if (GameState.inBossFight) return;
-        
         const now = Date.now();
         const deltaTime = (now - this.lastUpdate) / 1000; // Convert to seconds
         this.lastUpdate = now;
@@ -26,26 +24,6 @@ const IdleSystem = {
         
         // Update UI in real-time
         this.updateUI();
-    },
-    
-    triggerBoss() {
-        console.log('Triggering boss fight...');
-        
-        // Hide idle UI and show boss UI
-        const idleScreen = document.getElementById('idle-screen');
-        const bossScreen = document.getElementById('boss-screen');
-        
-        if (!idleScreen || !bossScreen) {
-            console.error('Screen elements not found!');
-            return;
-        }
-        
-        idleScreen.classList.add('hidden');
-        bossScreen.classList.remove('hidden');
-        
-        // Start boss fight
-        GameState.startBossFight();
-        BossSystem.startBoss();
     },
     
     // Handle upgrade purchase
@@ -79,46 +57,31 @@ const IdleSystem = {
         Object.keys(GameState.upgrades).forEach(upgradeType => {
             const upgrade = GameState.upgrades[upgradeType];
             const button = document.querySelector(`[data-upgrade="${upgradeType}"]`);
-            
+
             if (button) {
-                const cost = GameState.getUpgradeCost(upgradeType);
-                const canAfford = GameState.souls >= cost;
-                
-                button.disabled = !canAfford;
-                button.classList.toggle('affordable', canAfford);
-                
-                // Update button text
-                const levelSpan = button.querySelector('.upgrade-level');
-                const costSpan = button.querySelector('.upgrade-cost');
-                
+                const unlocked = GameState.isUpgradeUnlocked(upgradeType);
+                const costDisplay = button.querySelector('.upgrade-cost-display');
+                const levelSpan = button.querySelector('.upgrade-level-value');
+
+                if (!unlocked) {
+                    button.disabled = true;
+                    button.classList.remove('affordable');
+                    if (costDisplay) {
+                        const req = upgradeType === 'str' ? 3 : upgradeType === 'dex' ? 5 : 10;
+                        costDisplay.innerHTML = `🔒 Locked (Player Lv. ${req} required)`;
+                    }
+                } else {
+                    const cost = GameState.getUpgradeCost(upgradeType);
+                    const canAfford = GameState.souls >= cost;
+                    button.disabled = !canAfford;
+                    button.classList.toggle('affordable', canAfford);
+                    if (costDisplay) {
+                        costDisplay.innerHTML = `Cost: <span class="upgrade-cost">${formatNumber(cost)}</span> souls`;
+                    }
+                }
+
                 if (levelSpan) levelSpan.textContent = upgrade.level;
-                if (costSpan) costSpan.textContent = formatNumber(cost);
             }
         });
-        
-        // Update stats
-        const statsElement = document.getElementById('stats');
-        if (statsElement) {
-            statsElement.innerHTML = `
-                <div class="stat-item">Bosses Defeated: ${GameState.stats.bossesDefeated}</div>
-                <div class="stat-item">Deaths: ${GameState.stats.deaths}</div>
-                <div class="stat-item">Total Souls: ${formatNumber(GameState.totalSouls)}</div>
-            `;
-        }
-        
-        // Update fight boss button
-        const fightBossBtn = document.getElementById('fight-boss-btn');
-        if (fightBossBtn) {
-            const canFight = GameState.shouldTriggerBoss();
-            fightBossBtn.disabled = !canFight;
-            fightBossBtn.classList.toggle('ready', canFight);
-            
-            if (canFight) {
-                fightBossBtn.textContent = `⚔️ Fight Boss - Spend ${formatNumber(GameState.soulsNeededForBoss)} souls`;
-            } else {
-                const remaining = Math.floor(GameState.soulsNeededForBoss - GameState.souls);
-                fightBossBtn.textContent = `⚔️ Fight Boss (${formatNumber(remaining)} souls needed)`;
-            }
-        }
     }
 };

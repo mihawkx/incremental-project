@@ -12,10 +12,10 @@ const Game = {
         if (loaded) {
             console.log('Save game loaded!');
         }
-        
+        GameState.updateSoulsPerSecond();
+
         // Initialize systems
         IdleSystem.init();
-        BossSystem.init();
         
         // Setup UI event listeners
         this.setupEventListeners();
@@ -60,34 +60,6 @@ const Game = {
                 setTimeout(() => {
                     saveBtn.textContent = 'Save Game';
                 }, 1000);
-            });
-        }
-        
-        // Continue button (boss result screen)
-        const continueBtn = document.getElementById('continue-btn');
-        if (continueBtn) {
-            continueBtn.addEventListener('click', () => {
-                BossSystem.returnToIdle();
-            });
-        }
-        
-        // Fight boss button
-        const fightBossBtn = document.getElementById('fight-boss-btn');
-        if (fightBossBtn) {
-            fightBossBtn.addEventListener('click', () => {
-                if (GameState.shouldTriggerBoss()) {
-                    console.log('Player initiated boss fight');
-                    IdleSystem.triggerBoss();
-                }
-            });
-        }
-        
-        // Test boss button (debug)
-        const testBossBtn = document.getElementById('test-boss-btn');
-        if (testBossBtn) {
-            testBossBtn.addEventListener('click', () => {
-                console.log('Debug: Force triggering boss fight');
-                IdleSystem.triggerBoss();
             });
         }
         
